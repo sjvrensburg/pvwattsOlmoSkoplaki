@@ -108,12 +108,14 @@ Computes DC and AC power using all combinations of transposition
 and cell temperature models, returning results in a format suitable for
 ensemble analysis.
 
-This function runs 6 model combinations through both DC and AC stages:
+This function runs 8 model combinations through both DC and AC stages:
 \enumerate{
 \item Hay-Davies transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
 \item Hay-Davies transposition + Faiman cell temperature + PVWatts DC + AC clipping
 \item Reindl transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
 \item Reindl transposition + Faiman cell temperature + PVWatts DC + AC clipping
+\item Perez transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
+\item Perez transposition + Faiman cell temperature + PVWatts DC + AC clipping
 \item Olmo transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
 \item Olmo transposition + Faiman cell temperature + PVWatts DC + AC clipping
 }

@@ -14,7 +14,7 @@ pv_dc_pipeline(
   tilt,
   azimuth,
   albedo = 0.2,
-  transposition_model = c("haydavies", "reindl", "olmo"),
+  transposition_model = c("haydavies", "reindl", "perez", "olmo"),
   cell_temp_model = c("skoplaki", "faiman"),
   iam_exp = 0.05,
   P_dc0 = 230,
@@ -50,7 +50,7 @@ pv_dc_pipeline(
 
 \item{albedo}{Ground albedo (default 0.2)}
 
-\item{transposition_model}{Transposition model: "haydavies", "reindl", or "olmo" (default "haydavies")}
+\item{transposition_model}{Transposition model: "haydavies", "reindl", "perez", or "olmo" (default "haydavies")}
 
 \item{cell_temp_model}{Cell temperature model: "skoplaki" or "faiman" (default "skoplaki")}
 
@@ -102,7 +102,7 @@ transposition and cell temperature models with the PVWatts DC model.
 
 This function allows any combination of:
 \itemize{
-\item \strong{Transposition models}: "haydavies" (Erbs + Hay-Davies), "reindl" (Erbs + Reindl), or "olmo" (Olmo et al.)
+\item \strong{Transposition models}: "haydavies" (Erbs + Hay-Davies), "reindl" (Erbs + Reindl), "perez" (Erbs + Perez), or "olmo" (Olmo et al.)
 \item \strong{Cell temperature models}: "skoplaki" or "faiman"
 }
 }
@@ -117,6 +117,7 @@ See \code{\link{olmo_transposition}} for details.
 \code{\link{erbs_decomposition}} for Erbs decomposition model details
 \code{\link{haydavies_transposition}} for Hay-Davies transposition details
 \code{\link{reindl_transposition}} for Reindl transposition details
+\code{\link{perez_transposition}} for Perez transposition details
 \code{\link{skoplaki_cell_temperature}} for Skoplaki cell temperature details
 \code{\link{faiman_cell_temperature}} for Faiman cell temperature details
 \code{\link{pvwatts_dc}} for DC power model details

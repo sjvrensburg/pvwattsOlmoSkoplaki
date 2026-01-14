@@ -96,12 +96,14 @@ Computes DC power using all combinations of transposition
 and cell temperature models, returning results in a format suitable for
 ensemble analysis.
 
-This function runs 6 model combinations:
+This function runs 8 model combinations:
 \enumerate{
 \item Hay-Davies transposition + Skoplaki cell temperature
 \item Hay-Davies transposition + Faiman cell temperature
 \item Reindl transposition + Skoplaki cell temperature
 \item Reindl transposition + Faiman cell temperature
+\item Perez transposition + Skoplaki cell temperature
+\item Perez transposition + Faiman cell temperature
 \item Olmo transposition + Skoplaki cell temperature
 \item Olmo transposition + Faiman cell temperature
 }

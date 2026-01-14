@@ -5,7 +5,7 @@
 #'
 #' This function allows any combination of:
 #' \itemize{
-#'   \item \strong{Transposition models}: "haydavies" (Erbs + Hay-Davies), "reindl" (Erbs + Reindl), or "olmo" (Olmo et al.)
+#'   \item \strong{Transposition models}: "haydavies" (Erbs + Hay-Davies), "reindl" (Erbs + Reindl), "perez" (Erbs + Perez), or "olmo" (Olmo et al.)
 #'   \item \strong{Cell temperature models}: "skoplaki" or "faiman"
 #' }
 #'
@@ -18,7 +18,7 @@
 #' @param tilt Panel tilt angle (degrees)
 #' @param azimuth Panel azimuth (degrees, 0 = north)
 #' @param albedo Ground albedo (default 0.2)
-#' @param transposition_model Transposition model: "haydavies", "reindl", or "olmo" (default "haydavies")
+#' @param transposition_model Transposition model: "haydavies", "reindl", "perez", or "olmo" (default "haydavies")
 #' @param cell_temp_model Cell temperature model: "skoplaki" or "faiman" (default "skoplaki")
 #'
 #' @note The default transposition model is "haydavies" rather than "olmo" because
@@ -59,6 +59,7 @@
 #' \code{\link{erbs_decomposition}} for Erbs decomposition model details
 #' \code{\link{haydavies_transposition}} for Hay-Davies transposition details
 #' \code{\link{reindl_transposition}} for Reindl transposition details
+#' \code{\link{perez_transposition}} for Perez transposition details
 #' \code{\link{skoplaki_cell_temperature}} for Skoplaki cell temperature details
 #' \code{\link{faiman_cell_temperature}} for Faiman cell temperature details
 #' \code{\link{pvwatts_dc}} for DC power model details
@@ -75,7 +76,7 @@ pv_dc_pipeline <- function(
   tilt,
   azimuth,
   albedo = 0.2,
-  transposition_model = c("haydavies", "reindl", "olmo"),
+  transposition_model = c("haydavies", "reindl", "perez", "olmo"),
   cell_temp_model = c("skoplaki", "faiman"),
   iam_exp = 0.05,
   P_dc0 = 230,
@@ -141,6 +142,32 @@ pv_dc_pipeline <- function(
       azimuth = azimuth,
       albedo = albedo,
       min_cos_zenith = min_cos_zenith
+    )
+    G_poa <- transp_out$poa_global
+    zenith <- transp_out$zenith
+    incidence <- transp_out$incidence
+    azimuth_out <- transp_out$azimuth
+    sun_azimuth <- transp_out$azimuth
+  } else if (transposition_model == "perez") {
+    # First decompose GHI
+    erbs_out <- erbs_decomposition(
+      time = time,
+      lat = lat,
+      lon = lon,
+      GHI = GHI
+    )
+
+    # Then apply Perez transposition
+    transp_out <- perez_transposition(
+      time = time,
+      lat = lat,
+      lon = lon,
+      GHI = GHI,
+      DNI = erbs_out$DNI,
+      DHI = erbs_out$DHI,
+      tilt = tilt,
+      azimuth = azimuth,
+      albedo = albedo
     )
     G_poa <- transp_out$poa_global
     zenith <- transp_out$zenith
@@ -254,6 +281,15 @@ pv_dc_pipeline <- function(
     result$azimuth <- azimuth_out
     result$ai <- transp_out$ai
     result$rb <- transp_out$rb
+  } else if (transposition_model == "perez") {
+    result$DNI <- transp_out$DNI
+    result$DHI <- transp_out$DHI
+    result$azimuth <- azimuth_out
+    result$epsilon <- transp_out$epsilon
+    result$delta <- transp_out$delta
+    result$ebin <- transp_out$ebin
+    result$F1 <- transp_out$F1
+    result$F2 <- transp_out$F2
   } else {  # reindl
     result$DNI <- transp_out$DNI
     result$DHI <- transp_out$DHI
