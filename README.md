@@ -12,7 +12,7 @@ The parameters and specifications for the Mulilo De Aar PV plant used in this pa
 
 ## Features
 
-- **Olmo Transposition Model**: Converts global horizontal irradiance (GHI) to plane-of-array (POA) irradiance
+- **Olmo et al. Transposition Model**: Converts global horizontal irradiance (GHI) to plane-of-array (POA) irradiance using the clearness index method (Olmo et al., 1999). Unlike traditional models, this approach does not require decomposition into direct and diffuse components.
 - **Skoplaki Cell Temperature Models**: Two variants for calculating PV cell temperature based on NOCT (Nominal Operating Cell Temperature)
   - Model 1: Uses wind convection coefficient `h_w = 8.91 + 2.00*v_f`
   - Model 2: Uses wind convection coefficient `h_w = 5.7 + 3.8*v_w` where `v_w = 0.68*v_f - 0.5`
@@ -209,7 +209,9 @@ ORCID: [0000-0002-0749-2277](https://orcid.org/0000-0002-0749-2277)
 
 - **Corripio, J. G. (2003).** Vectorial algebra algorithms for calculating terrain parameters from DEMs and the position of the sun for solar radiation modelling in mountainous terrain. *International Journal of Geographical Information Science*, 17(1), 1-23.
 
-- **Skoplaki, E., Boudouvis, A. G., & Palyvos, J. A. (2008).** A simple correlation for the operating temperature of photovoltaic modules of arbitrary mounting. *Solar Energy Materials and Solar Cells*, 92(11), 1393-1402.
+- **Olmo, F. J., Vida, J., Foyo, I., Castro-Diez, Y., & Alados-Arboledas, L. (1999).** Prediction of global irradiance on inclined surfaces from horizontal global irradiance. *Energy*, 24(8), 689-704. [https://doi.org/10.1016/S0360-5442(99)00025-0](https://doi.org/10.1016/S0360-5442(99)00025-0)
+
+- **Skoplaki, E., Boudouvis, A. G., & Palyvos, J. A. (2008).** A simple correlation for the operating temperature of photovoltaic modules of arbitrary mounting. *Solar Energy Materials and Solar Cells*, 92(11), 1393-1402. [https://doi.org/10.1016/j.solmat.2008.05.016](https://doi.org/10.1016/j.solmat.2008.05.016)
 
 ## Contributing
 

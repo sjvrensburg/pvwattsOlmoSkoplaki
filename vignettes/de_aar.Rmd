@@ -49,15 +49,18 @@ The Trina TSM-230 PC05 module specifications are well-documented and provide the
 
 These parameters are used directly in the PVWatts DC power model and the Skoplaki cell temperature calculations.
 
-### Transposition Model: Olmo
+### Transposition Model: Olmo et al.
 
-We use the Olmo transposition model to convert global horizontal irradiance (GHI) to plane-of-array (POA) irradiance. This model accounts for:
+We use the Olmo et al. (1999) transposition model to convert global horizontal irradiance (GHI) to plane-of-array (POA) irradiance. Unlike traditional transposition models that require decomposition of GHI into direct and diffuse components, the Olmo model uses a clearness index approach:
 
-- Direct beam irradiance component (using sun position and panel orientation)
-- Diffuse sky irradiance (isotropic assumption)
-- Ground-reflected irradiance (albedo = 0.2, typical for semi-arid regions)
+$$I_{\gamma} = I \cdot \psi_o \cdot F_c$$
 
-The Olmo model is computationally efficient and suitable for the South African climate with high direct normal irradiance.
+where:
+- $\psi_o = \exp(-k_t(\theta^2 - \theta_z^2))$ is the conversion function based on clearness index $k_t$ and the difference between incidence angle $\theta$ and zenith angle $\theta_z$ (in radians)
+- $F_c = 1 + \rho \sin^2(\theta/2)$ is the ground reflection multiplying factor
+- $k_t = I/I_0$ is the clearness index (ratio of measured to extraterrestrial irradiance)
+
+This model is computationally efficient and well-suited for locations like De Aar with high direct normal irradiance and clear sky conditions.
 
 ### Cell Temperature Model: Skoplaki
 
@@ -329,5 +332,6 @@ This convenience function is recommended for most users as it reduces boilerplat
 
 ## References
 
-- Ayvazoğluyüksel, Ö., & Başaran Filik, Ü. (2018). Estimation methods of global solar radiation, cell temperature and solar power forecasting: A review and case study in Eskişehir. *Renewable and Sustainable Energy Reviews*, 91, 639-653.
-- Skoplaki, E., Boudouvis, A. G., & Palyvos, J. A. (2008). A simple correlation for the operating temperature of photovoltaic modules of arbitrary mounting. *Solar Energy Materials and Solar Cells*, 92(11), 1393-1402.
+- Ayvazoğluyüksel, Ö., & Başaran Filik, Ü. (2018). Estimation methods of global solar radiation, cell temperature and solar power forecasting: A review and case study in Eskişehir. *Renewable and Sustainable Energy Reviews*, 91, 639-653. [https://doi.org/10.1016/j.rser.2018.03.084](https://doi.org/10.1016/j.rser.2018.03.084)
+- Olmo, F. J., Vida, J., Foyo, I., Castro-Diez, Y., & Alados-Arboledas, L. (1999). Prediction of global irradiance on inclined surfaces from horizontal global irradiance. *Energy*, 24(8), 689-704. [https://doi.org/10.1016/S0360-5442(99)00025-0](https://doi.org/10.1016/S0360-5442(99)00025-0)
+- Skoplaki, E., Boudouvis, A. G., & Palyvos, J. A. (2008). A simple correlation for the operating temperature of photovoltaic modules of arbitrary mounting. *Solar Energy Materials and Solar Cells*, 92(11), 1393-1402. [https://doi.org/10.1016/j.solmat.2008.05.016](https://doi.org/10.1016/j.solmat.2008.05.016)
