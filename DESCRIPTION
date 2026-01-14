@@ -1,10 +1,10 @@
-Package: pvwattsOlmoSkoplaki
-Title: PV Power Forecasting Pipeline using Olmo, Skoplaki, and PVWatts Models
+Package: pvflux
+Title: Solar PV Power Forecasting with Multiple Transposition and Cell Temperature Models
 Version: 0.1.0
 Authors@R:
     person("Stéfan", "Janse van Rensburg", , "stefanj@mandela.ac.za", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0749-2277"))
-Description: Implements a solar PV power forecasting pipeline with Olmo transposition, Skoplaki cell temperature (two variants), PVWatts DC output, and simple AC inverter clipping. Defaults based on Trina TSM-PC05 module and De Aar site. Incorporates solar position calculation functions from the insol package by Javier G. Corripio.
+Description: Implements a modular solar PV power forecasting pipeline with multiple transposition models (Hay-Davies, Olmo), cell temperature models (Skoplaki, Faiman), PVWatts DC output, and simple AC inverter clipping. Supports independent model selection and ensemble analysis. Defaults based on Trina TSM-PC05 module and De Aar site. Incorporates solar position calculation functions from the insol package by Javier G. Corripio.
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

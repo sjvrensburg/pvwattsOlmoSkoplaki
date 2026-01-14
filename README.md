@@ -1,4 +1,4 @@
-# pvwattsOlmoSkoplaki
+# pvflux
 
 [![License: GPL-3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -35,11 +35,11 @@ for most applications. See `?olmo_transposition` for details.
 
 ## Installation
 
-You can install the development version of pvwattsOlmoSkoplaki from GitHub:
+You can install the development version of pvflux from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("sjvrensburg/pvwattsOlmoSkoplaki", build_vignettes = TRUE)
+devtools::install_github("sjvrensburg/pvflux", build_vignettes = TRUE)
 ```
 
 ## Quick Start
@@ -49,7 +49,7 @@ devtools::install_github("sjvrensburg/pvwattsOlmoSkoplaki", build_vignettes = TR
 The convenience function `pv_power_pipeline()` calculates both DC and AC power using Hay-Davies transposition and Skoplaki cell temperature (default):
 
 ```r
-library(pvwattsOlmoSkoplaki)
+library(pvflux)
 
 # Site parameters (De Aar, South Africa)
 lat <- -30.6279
@@ -301,7 +301,7 @@ DC pipeline with Hay-Davies + Faiman (recommended for most applications).
 For a complete example using the De Aar solar plant with model comparisons, see the vignette:
 
 ```r
-vignette("de_aar", package = "pvwattsOlmoSkoplaki")
+vignette("de_aar", package = "pvflux")
 ```
 
 ## Default Parameters
@@ -403,5 +403,5 @@ Contributions, bug reports, and feature requests are welcome! Please open an iss
 If you use this package in your research, please cite:
 
 ```r
-citation("pvwattsOlmoSkoplaki")
+citation("pvflux")
 ```
