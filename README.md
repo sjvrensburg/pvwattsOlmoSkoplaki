@@ -224,6 +224,18 @@ GPL-3 (compatible with the GPL-2 licensed insol functions)
 Email: stefanj@mandela.ac.za
 ORCID: [0000-0002-0749-2277](https://orcid.org/0000-0002-0749-2277)
 
+## AI Use Declaration
+
+This package was developed with assistance from Claude (Anthropic), an AI assistant. Claude was used for:
+
+- Implementing the Olmo et al. (1999) transposition model equations from the source paper
+- Implementing the Skoplaki cell temperature model (Equation 41) with both wind coefficient variants
+- Refactoring code into modular functions
+- Writing documentation and roxygen2 comments
+- Drafting the vignette and README content
+
+All AI-generated code and documentation was reviewed, validated against the original published equations, and approved by the package author.
+
 ## References
 
 - **Ayvazoğluyüksel, Ö., & Başaran Filik, Ü. (2018).** Estimation methods of global solar radiation, cell temperature and solar power forecasting: A review and case study in Eskişehir. *Renewable and Sustainable Energy Reviews*, 91, 639-653. [https://doi.org/10.1016/j.rser.2018.03.084](https://doi.org/10.1016/j.rser.2018.03.084)
