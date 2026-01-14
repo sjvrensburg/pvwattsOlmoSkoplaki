@@ -2,7 +2,7 @@
 title: "De Aar PV Plant Forecasting Example"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{De Aar Example}
+  %\VignetteIndexEntry{De Aar PV Plant Forecasting Example}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,45 +14,292 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Introduction
+
+This vignette demonstrates the use of the `pvwattsOlmoSkoplaki` package for modeling the Mulilo De Aar PV solar plant in South Africa. The plant specifications are publicly available from the [HAWI Knowledge Database](https://hawiknowledge.org/solar_power_stations_2.html#DeAarMulilo).
+
+The De Aar plant is a ground-mounted photovoltaic installation using Trina TSM-PC05 polycrystalline modules. This vignette explains our modeling choices and demonstrates the complete DC and AC power forecasting pipeline.
+
+## Known Plant Specifications
+
+Based on publicly available information:
+
+- **Location**: De Aar, South Africa (latitude: -30.6279°, longitude: 24.0054°)
+- **PV Modules**: Trina Solar TSM-230 PC05 (230W polycrystalline)
+  - Total modules: 44,880
+  - Total DC capacity: 10.32 MW
+  - Module efficiency: 14.1%
+  - Temperature coefficient: -0.43%/K
+  - NOCT: 45°C
+- **Array Configuration**:
+  - Tilt angle: 20° (optimized for latitude)
+  - Azimuth: 0° (north-facing, Southern Hemisphere)
+- **AC Capacity**: ~10 MW (inverter details not publicly available)
+
+## Modeling Approach
+
+### PV Module Parameters
+
+The Trina TSM-230 PC05 module specifications are well-documented and provide the foundation for our modeling:
+
+- **Nameplate DC power** (`P_dc0`): 230 W per module
+- **Temperature coefficient** (`gamma`): -0.0043 /K (equivalent to -0.43%/K)
+- **NOCT**: 45°C (measured at 800 W/m², 20°C ambient, 1 m/s wind)
+- **Module efficiency at STC** (`eta_STC`): 0.141 (14.1%)
+
+These parameters are used directly in the PVWatts DC power model and the Skoplaki cell temperature calculations.
+
+### Transposition Model: Olmo
+
+We use the Olmo transposition model to convert global horizontal irradiance (GHI) to plane-of-array (POA) irradiance. This model accounts for:
+
+- Direct beam irradiance component (using sun position and panel orientation)
+- Diffuse sky irradiance (isotropic assumption)
+- Ground-reflected irradiance (albedo = 0.2, typical for semi-arid regions)
+
+The Olmo model is computationally efficient and suitable for the South African climate with high direct normal irradiance.
+
+### Cell Temperature Model: Skoplaki
+
+We implement two variants of the Skoplaki cell temperature model based on Ayvazoğluyüksel & Başaran Filik (2018):
+
+- **Model 1** (default): Uses convection coefficient h_w = 8.91 + 2.00×v_f
+- **Model 2**: Uses convection coefficient h_w = 5.7 + 3.8×v_w, where v_w = 0.68×v_f - 0.5
+
+Both models use the full NOCT-based formulation (Equation 41 from the paper), which accounts for:
+- Wind speed effects on convection heat transfer
+- Module optical properties (τα = 0.9)
+- Temperature-dependent efficiency losses
+
+The choice between Model 1 and Model 2 depends on the wind speed regime and module mounting configuration. Model 1 is typically recommended for ground-mounted systems like De Aar.
+
+### DC Power Model: PVWatts
+
+The PVWatts DC power model is a simple, widely-validated approach:
+
+$$P_{dc} = P_{dc0} \times \frac{G_{poa}}{1000} \times [1 + \gamma \times (T_{cell} - 25)]$$
+
+where $G_{poa}$ is in W/m² and $T_{cell}$ is in °C. This model captures the first-order temperature effects on PV performance.
+
+## Inverter Modeling Assumptions
+
+**Important Note**: Detailed inverter specifications for the De Aar plant are not publicly available. Therefore, we employ a simplified inverter model with the following assumptions:
+
+### Simplifying Assumptions
+
+1. **Number and Capacity**: We assume 20 inverters with 500 kW capacity each, totaling 10 MW AC capacity. This is a reasonable DC:AC ratio of approximately 1.03:1 for this type of installation.
+
+2. **Constant Efficiency**: We assume a constant inverter efficiency of 97% across all operating points. In reality:
+   - Inverter efficiency varies with loading (typically 90-98%)
+   - Efficiency is lower at very low and very high loading
+   - Modern commercial inverters typically peak at 97-98% efficiency at 20-70% loading
+   - Our 97% constant efficiency represents a reasonable average for forecasting purposes
+
+3. **Simple Clipping**: We implement hard clipping when DC power exceeds inverter capacity. In reality:
+   - Commercial inverters may implement MPPT-based power limiting
+   - Some inverters allow brief overloading (e.g., 110% for short periods)
+   - Power factor control may affect AC output
+
+4. **No Transformer Losses**: If the plant uses step-up transformers (likely for grid connection), additional losses of 0.5-1.5% would apply.
+
+5. **No Night-Time Consumption**: We do not model inverter standby power consumption or auxiliary loads.
+
+### Impact on Forecasts
+
+These simplifications mean that:
+
+- **During moderate irradiance**: The model should provide good estimates (within 2-3% of actual)
+- **During peak irradiance**: Clipping behavior may differ slightly from actual plant performance
+- **During low irradiance**: We may slightly overestimate efficiency
+- **Annual energy**: The constant 97% efficiency assumption should provide reasonable total energy estimates
+
+For more accurate site-specific modeling, the actual inverter make, model, and configuration would need to be incorporated using manufacturer efficiency curves.
+
 ## Setup
 
+```{r setup}
 library(pvwattsOlmoSkoplaki)
+```
 
 ## Site Parameters
 
+```{r site_params}
 lat <- -30.6279
 lon <- 24.0054
 tilt <- 20
 azimuth <- 0
 P_dc0_plant <- 10322400  # 44880 modules * 230 W
+```
 
-## Example Data
+## Example Weather Data
 
-time <- seq(as.POSIXct("2026-01-01 00:00", tz = "UTC"), length.out = 24, by = "hour")
-GHI <- rep(500, 24)  # Placeholder
-T_air <- rep(25, 24)
-wind <- rep(2, 24)
+For this example, we create a typical summer day profile for De Aar. In practice, these would come from weather forecast models (NWP) or measurement stations.
 
-## Run DC Pipeline with Skoplaki Model 1
+```{r weather_data}
+# 24-hour period starting at midnight (UTC)
+time <- seq(as.POSIXct("2026-01-15 00:00", tz = "UTC"),
+            length.out = 24, by = "hour")
 
+# Typical summer day GHI profile (W/m²)
+# Peak around 1000 W/m² at solar noon
+GHI <- c(0, 0, 0, 0, 0, 50, 200, 450, 700, 850, 950, 1000,
+         980, 900, 750, 550, 350, 150, 20, 0, 0, 0, 0, 0)
+
+# Typical summer temperature profile (°C)
+# De Aar has hot days, cooler nights
+T_air <- c(18, 17, 16, 16, 16, 17, 19, 22, 26, 29, 32, 34,
+           35, 35, 34, 33, 30, 27, 24, 22, 21, 20, 19, 18)
+
+# Wind speed (m/s) - generally moderate in De Aar
+wind <- c(2, 2, 2, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5, 5,
+          4.5, 4.5, 4, 4, 3.5, 3, 3, 2.5, 2.5, 2, 2, 2)
+```
+
+## DC Power Modeling
+
+We compute DC power using both Skoplaki cell temperature models to demonstrate their differences.
+
+### Skoplaki Model 1 (Default)
+
+Model 1 uses the convection coefficient h_w = 8.91 + 2.00×v_f, which is typically recommended for ground-mounted systems with good ventilation.
+
+```{r dc_model1}
 dc_out_m1 <- pv_dc_olmo_skoplaki_pvwatts(
-  time, lat, lon, GHI, T_air, wind, tilt, azimuth,
+  time = time,
+  lat = lat,
+  lon = lon,
+  GHI = GHI,
+  T_air = T_air,
+  wind = wind,
+  tilt = tilt,
+  azimuth = azimuth,
   P_dc0 = P_dc0_plant,
   skoplaki_variant = "model1"
 )
-head(dc_out_m1)
 
-## Run DC Pipeline with Skoplaki Model 2
+# Display key results for midday hours
+dc_out_m1[10:15, c("time", "GHI", "G_poa", "T_air", "T_cell", "P_dc")]
+```
 
+### Skoplaki Model 2
+
+Model 2 uses h_w = 5.7 + 3.8×v_w (where v_w = 0.68×v_f - 0.5), which may be more appropriate for certain mounting configurations.
+
+```{r dc_model2}
 dc_out_m2 <- pv_dc_olmo_skoplaki_pvwatts(
-  time, lat, lon, GHI, T_air, wind, tilt, azimuth,
+  time = time,
+  lat = lat,
+  lon = lon,
+  GHI = GHI,
+  T_air = T_air,
+  wind = wind,
+  tilt = tilt,
+  azimuth = azimuth,
   P_dc0 = P_dc0_plant,
   skoplaki_variant = "model2"
 )
-head(dc_out_m2)
 
-## Add AC (using Model 1 output)
+# Display key results for midday hours
+dc_out_m2[10:15, c("time", "GHI", "G_poa", "T_air", "T_cell", "P_dc")]
+```
 
-ac_out <- pv_ac_simple_clipping(dc_out_m1$P_dc)
+### Comparing Cell Temperature Models
+
+The two models typically produce different cell temperature estimates, particularly at higher wind speeds:
+
+```{r compare_temps}
+comparison <- data.frame(
+  time = dc_out_m1$time,
+  T_air = dc_out_m1$T_air,
+  wind = dc_out_m1$wind,
+  T_cell_m1 = dc_out_m1$T_cell,
+  T_cell_m2 = dc_out_m2$T_cell,
+  delta_T = dc_out_m1$T_cell - dc_out_m2$T_cell
+)
+
+# Show midday comparison
+comparison[10:15, ]
+```
+
+Model 2 typically predicts slightly lower cell temperatures at higher wind speeds due to its different wind speed transformation and convection coefficient formula.
+
+## AC Power and Inverter Clipping
+
+Now we convert DC power to AC power using our simplified inverter model. For this example, we use Model 1 output.
+
+```{r ac_power}
+ac_out <- pv_ac_simple_clipping(
+  P_dc = dc_out_m1$P_dc,
+  n_inverters = 20,
+  inverter_kw = 500,
+  eta_inv = 0.97
+)
+
+# Add AC power to results
 dc_out_m1$P_ac <- ac_out$P_ac
-head(dc_out_m1)
+dc_out_m1$clipped <- ac_out$clipped
+dc_out_m1$inverter_loss <- dc_out_m1$P_dc - dc_out_m1$P_ac
+
+# Display results around peak hours
+dc_out_m1[10:15, c("time", "P_dc", "P_ac", "clipped", "inverter_loss")]
+```
+
+### Daily Energy Summary
+
+```{r energy_summary}
+# Energy in MWh (power in W × hours / 1e6)
+daily_dc_energy <- sum(dc_out_m1$P_dc) / 1e6
+daily_ac_energy <- sum(dc_out_m1$P_ac) / 1e6
+inverter_losses <- daily_dc_energy - daily_ac_energy
+clipping_losses <- sum(dc_out_m1$P_dc[dc_out_m1$clipped] -
+                       dc_out_m1$P_ac[dc_out_m1$clipped]) / 1e6
+
+cat(sprintf("Daily DC Energy: %.2f MWh\n", daily_dc_energy))
+cat(sprintf("Daily AC Energy: %.2f MWh\n", daily_ac_energy))
+cat(sprintf("Total Inverter Losses: %.2f MWh (%.1f%%)\n",
+            inverter_losses, 100 * inverter_losses / daily_dc_energy))
+cat(sprintf("Clipping Losses: %.2f MWh (%.1f%%)\n",
+            clipping_losses, 100 * clipping_losses / daily_dc_energy))
+cat(sprintf("Number of clipped hours: %d\n", sum(dc_out_m1$clipped)))
+```
+
+## Discussion
+
+### Model Selection
+
+For the De Aar plant:
+
+1. **Skoplaki Model 1** is recommended as the default for ground-mounted systems with typical ventilation. It has been validated for similar installations.
+
+2. **Skoplaki Model 2** may be more appropriate if the actual mounting configuration has restricted airflow or different wind exposure characteristics.
+
+3. The difference between models is typically 1-3°C in cell temperature, which translates to approximately 0.5-1.5% difference in power output at high irradiance.
+
+### Limitations and Future Work
+
+Our modeling approach has several limitations that should be considered:
+
+1. **Inverter Model**: The simplified constant-efficiency inverter model does not capture:
+   - Efficiency variation with loading
+   - Dynamic MPPT behavior
+   - Power factor control
+   - Voltage-dependent losses
+
+   With actual inverter specifications, a more detailed model (e.g., Sandia inverter model) would improve accuracy.
+
+2. **Soiling Losses**: We do not model soiling accumulation on modules. De Aar is in a semi-arid region where soiling can reduce output by 2-5% between cleaning cycles.
+
+3. **Spectral Effects**: The PVWatts model does not account for spectral mismatch effects, which can be important for polycrystalline silicon modules.
+
+4. **Shading**: We assume no shading, which is reasonable for a well-designed ground-mounted plant but should be verified.
+
+5. **Module Degradation**: The model uses nameplate ratings. Actual plants experience degradation of approximately 0.5-0.8% per year.
+
+6. **Bifacial Gain**: If the plant uses bifacial modules (not indicated in available specifications), rear-side irradiance is not modeled.
+
+Despite these limitations, the modeling pipeline provides a reasonable foundation for PV power forecasting at the De Aar plant, particularly when the focus is on day-ahead forecasting where relative changes are more important than absolute accuracy.
+
+## References
+
+- Ayvazoğluyüksel, Ö., & Başaran Filik, Ü. (2018). Estimation methods of global solar radiation, cell temperature and solar power forecasting: A review and case study in Eskişehir. *Renewable and Sustainable Energy Reviews*, 91, 639-653.
+- Skoplaki, E., Boudouvis, A. G., & Palyvos, J. A. (2008). A simple correlation for the operating temperature of photovoltaic modules of arbitrary mounting. *Solar Energy Materials and Solar Cells*, 92(11), 1393-1402.
