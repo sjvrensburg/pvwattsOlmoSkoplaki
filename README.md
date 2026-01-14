@@ -8,7 +8,7 @@ An R package implementing a solar PV power forecasting pipeline with Olmo transp
 
 ## Public Data Notice
 
-The parameters and specifications for the Mulilo De Aar PV plant used in this package are publicly available information, documented at the [HAWI Knowledge Database](https://hawiknowledge.org/solar_power_stations_2.html#DeAarMulilo). This information is not proprietary and has been openly published.
+The parameters and specifications for the Mulilo De Aar PV plant used in this package are **assumed values** based on information documented at the [HAWI Knowledge Database](https://hawiknowledge.org/solar_power_stations_2.html#DeAarMulilo). These assumed parameters were compiled by HAWI from publicly available documents in the public domain, including Environmental Impact Assessment (EIA) submissions and similar regulatory filings.
 
 ## Features
 
@@ -32,6 +32,10 @@ devtools::install_github("sjvrensburg/pvwattsOlmoSkoplaki", build_vignettes = TR
 
 ## Quick Start
 
+### Complete Pipeline (DC + AC)
+
+The convenience function `pv_power_pipeline()` calculates both DC and AC power in a single call:
+
 ```r
 library(pvwattsOlmoSkoplaki)
 
@@ -48,7 +52,31 @@ GHI <- c(50, 150, 350, 550, 700, 800, 850, 800, 700, 550, 350, 150)
 T_air <- c(20, 22, 25, 28, 30, 32, 33, 32, 30, 28, 25, 23)
 wind <- c(2, 2.5, 3, 3.5, 4, 4, 3.5, 3, 2.5, 2, 2, 2)
 
-# Calculate DC power for a single 230W module
+# Calculate DC and AC power for complete plant (44,880 modules = 10.32 MW)
+result <- pv_power_pipeline(
+  time = time,
+  lat = lat,
+  lon = lon,
+  GHI = GHI,
+  T_air = T_air,
+  wind = wind,
+  tilt = tilt,
+  azimuth = azimuth,
+  P_dc0 = 44880 * 230,  # Total DC capacity (W)
+  n_inverters = 20,
+  inverter_kw = 500,
+  eta_inv = 0.97
+)
+
+head(result)
+```
+
+### Separate DC and AC Calculations
+
+Alternatively, you can call the DC and AC functions separately for more control:
+
+```r
+# Calculate DC power only
 dc_out <- pv_dc_olmo_skoplaki_pvwatts(
   time = time,
   lat = lat,
@@ -58,42 +86,37 @@ dc_out <- pv_dc_olmo_skoplaki_pvwatts(
   wind = wind,
   tilt = tilt,
   azimuth = azimuth,
-  P_dc0 = 230,  # Nameplate DC power (W)
+  P_dc0 = 44880 * 230,
   skoplaki_variant = "model1"
 )
 
-head(dc_out)
-
-# For a complete plant (44,880 modules = 10.32 MW)
-P_dc0_plant <- 44880 * 230  # 10,322,400 W
-
-dc_plant <- pv_dc_olmo_skoplaki_pvwatts(
-  time = time,
-  lat = lat,
-  lon = lon,
-  GHI = GHI,
-  T_air = T_air,
-  wind = wind,
-  tilt = tilt,
-  azimuth = azimuth,
-  P_dc0 = P_dc0_plant
-)
-
-# Add AC output with inverter clipping
+# Add AC power conversion
 ac_out <- pv_ac_simple_clipping(
-  P_dc = dc_plant$P_dc,
+  P_dc = dc_out$P_dc,
   n_inverters = 20,
   inverter_kw = 500,
   eta_inv = 0.97
 )
 
-dc_plant$P_ac <- ac_out$P_ac
-dc_plant$clipped <- ac_out$clipped
+dc_out$P_ac <- ac_out$P_ac
+dc_out$clipped <- ac_out$clipped
 
-head(dc_plant)
+head(dc_out)
 ```
 
 ## Function Reference
+
+### `pv_power_pipeline()`
+
+**Convenience function** that calculates both DC and AC power in a single call. This is the recommended function for most users.
+
+**Key Parameters:**
+- All parameters from `pv_dc_olmo_skoplaki_pvwatts()` (see below)
+- `n_inverters`: Number of inverters (default 20)
+- `inverter_kw`: kW rating per inverter (default 500)
+- `eta_inv`: Inverter efficiency (default 0.97)
+
+**Returns:** Data frame with POA irradiance, cell temperature, DC power, AC power, clipping flags, and solar position
 
 ### `pv_dc_olmo_skoplaki_pvwatts()`
 

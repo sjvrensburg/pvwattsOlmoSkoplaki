@@ -2,3 +2,4 @@
 
 export(pv_ac_simple_clipping)
 export(pv_dc_olmo_skoplaki_pvwatts)
+export(pv_power_pipeline)

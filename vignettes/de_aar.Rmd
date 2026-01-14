@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-This vignette demonstrates the use of the `pvwattsOlmoSkoplaki` package for modeling the Mulilo De Aar PV solar plant in South Africa. The plant specifications are publicly available from the [HAWI Knowledge Database](https://hawiknowledge.org/solar_power_stations_2.html#DeAarMulilo).
+This vignette demonstrates the use of the `pvwattsOlmoSkoplaki` package for modeling the Mulilo De Aar PV solar plant in South Africa. The plant specifications used in this package are **assumed values** based on information documented at the [HAWI Knowledge Database](https://hawiknowledge.org/solar_power_stations_2.html#DeAarMulilo), which compiled these parameters from publicly available documents in the public domain, including Environmental Impact Assessment (EIA) submissions and similar regulatory filings.
 
 The De Aar plant is a ground-mounted photovoltaic installation using Trina TSM-PC05 polycrystalline modules. This vignette explains our modeling choices and demonstrates the complete DC and AC power forecasting pipeline.
 
@@ -298,6 +298,34 @@ Our modeling approach has several limitations that should be considered:
 6. **Bifacial Gain**: If the plant uses bifacial modules (not indicated in available specifications), rear-side irradiance is not modeled.
 
 Despite these limitations, the modeling pipeline provides a reasonable foundation for PV power forecasting at the De Aar plant, particularly when the focus is on day-ahead forecasting where relative changes are more important than absolute accuracy.
+
+## Using the Convenience Function
+
+For most use cases, the `pv_power_pipeline()` convenience function provides a simpler interface by combining DC and AC calculations in a single call:
+
+```{r convenience}
+# Same calculation using the convenience function
+result_pipeline <- pv_power_pipeline(
+  time = time,
+  lat = lat,
+  lon = lon,
+  GHI = GHI,
+  T_air = T_air,
+  wind = wind,
+  tilt = tilt,
+  azimuth = azimuth,
+  P_dc0 = P_dc0_plant,
+  skoplaki_variant = "model1",
+  n_inverters = 20,
+  inverter_kw = 500,
+  eta_inv = 0.97
+)
+
+# Results are identical to the manual approach
+head(result_pipeline[, c("time", "P_dc", "P_ac", "clipped")])
+```
+
+This convenience function is recommended for most users as it reduces boilerplate code and ensures consistent configuration between DC and AC calculations.
 
 ## References
 
