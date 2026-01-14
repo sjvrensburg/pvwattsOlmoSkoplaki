@@ -1,0 +1,45 @@
+---
+title: "De Aar PV Plant Forecasting Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{De Aar Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Setup
+
+library(pvwattsOlmoSkoplaki)
+
+## Site Parameters
+
+lat <- -30.6279
+lon <- 24.0054
+tilt <- 20
+azimuth <- 0
+P_dc0_plant <- 10322400  # 44880 modules * 230 W
+
+## Example Data
+
+time <- seq(as.POSIXct("2026-01-01 00:00", tz = "UTC"), length.out = 24, by = "hour")
+GHI <- rep(500, 24)  # Placeholder
+T_air <- rep(25, 24)
+wind <- rep(2, 24)
+
+## Run DC Pipeline
+
+dc_out <- pv_dc_olmo_skoplaki_pvwatts(time, lat, lon, GHI, T_air, wind, tilt, azimuth, P_dc0 = P_dc0_plant)
+head(dc_out)
+
+## Add AC
+
+ac_out <- pv_ac_simple_clipping(dc_out$P_dc)
+dc_out$P_ac <- ac_out$P_ac
+head(dc_out)
