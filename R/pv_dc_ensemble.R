@@ -4,12 +4,14 @@
 #' and cell temperature models, returning results in a format suitable for
 #' ensemble analysis.
 #'
-#' This function runs 4 model combinations:
+#' This function runs 6 model combinations:
 #' \enumerate{
-#'   \item Olmo transposition + Skoplaki cell temperature
-#'   \item Olmo transposition + Faiman cell temperature
 #'   \item Hay-Davies transposition + Skoplaki cell temperature
 #'   \item Hay-Davies transposition + Faiman cell temperature
+#'   \item Reindl transposition + Skoplaki cell temperature
+#'   \item Reindl transposition + Faiman cell temperature
+#'   \item Olmo transposition + Skoplaki cell temperature
+#'   \item Olmo transposition + Faiman cell temperature
 #' }
 #'
 #' @param time POSIXct vector of times (UTC recommended)
@@ -108,7 +110,7 @@ pv_dc_ensemble <- function(
 
   # Define all model combinations
   combinations <- expand.grid(
-    transposition = c("olmo", "haydavies"),
+    transposition = c("haydavies", "reindl", "olmo"),
     cell_temp = c("skoplaki", "faiman"),
     stringsAsFactors = FALSE
   )

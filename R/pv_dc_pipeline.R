@@ -5,7 +5,7 @@
 #'
 #' This function allows any combination of:
 #' \itemize{
-#'   \item \strong{Transposition models}: "olmo" (Olmo et al.) or "haydavies" (Erbs + Hay-Davies)
+#'   \item \strong{Transposition models}: "haydavies" (Erbs + Hay-Davies), "reindl" (Erbs + Reindl), or "olmo" (Olmo et al.)
 #'   \item \strong{Cell temperature models}: "skoplaki" or "faiman"
 #' }
 #'
@@ -18,7 +18,7 @@
 #' @param tilt Panel tilt angle (degrees)
 #' @param azimuth Panel azimuth (degrees, 0 = north)
 #' @param albedo Ground albedo (default 0.2)
-#' @param transposition_model Transposition model: "olmo" or "haydavies" (default "haydavies")
+#' @param transposition_model Transposition model: "haydavies", "reindl", or "olmo" (default "haydavies")
 #' @param cell_temp_model Cell temperature model: "skoplaki" or "faiman" (default "skoplaki")
 #'
 #' @note The default transposition model is "haydavies" rather than "olmo" because
@@ -58,6 +58,7 @@
 #' \code{\link{olmo_transposition}} for Olmo transposition model details
 #' \code{\link{erbs_decomposition}} for Erbs decomposition model details
 #' \code{\link{haydavies_transposition}} for Hay-Davies transposition details
+#' \code{\link{reindl_transposition}} for Reindl transposition details
 #' \code{\link{skoplaki_cell_temperature}} for Skoplaki cell temperature details
 #' \code{\link{faiman_cell_temperature}} for Faiman cell temperature details
 #' \code{\link{pvwatts_dc}} for DC power model details
@@ -74,7 +75,7 @@ pv_dc_pipeline <- function(
   tilt,
   azimuth,
   albedo = 0.2,
-  transposition_model = c("haydavies", "olmo"),
+  transposition_model = c("haydavies", "reindl", "olmo"),
   cell_temp_model = c("skoplaki", "faiman"),
   iam_exp = 0.05,
   P_dc0 = 230,
@@ -119,7 +120,7 @@ pv_dc_pipeline <- function(
     sun_azimuth <- transp_out$sun_azimuth
     # For olmo, use zenith as sun_azimuth equivalent for consistency
     azimuth_out <- zenith
-  } else {  # haydavies
+  } else if (transposition_model == "haydavies") {
     # First decompose GHI
     erbs_out <- erbs_decomposition(
       time = time,
@@ -130,6 +131,33 @@ pv_dc_pipeline <- function(
 
     # Then apply Hay-Davies transposition
     transp_out <- haydavies_transposition(
+      time = time,
+      lat = lat,
+      lon = lon,
+      GHI = GHI,
+      DNI = erbs_out$DNI,
+      DHI = erbs_out$DHI,
+      tilt = tilt,
+      azimuth = azimuth,
+      albedo = albedo,
+      min_cos_zenith = min_cos_zenith
+    )
+    G_poa <- transp_out$poa_global
+    zenith <- transp_out$zenith
+    incidence <- transp_out$incidence
+    azimuth_out <- transp_out$azimuth
+    sun_azimuth <- transp_out$azimuth
+  } else {  # reindl
+    # First decompose GHI
+    erbs_out <- erbs_decomposition(
+      time = time,
+      lat = lat,
+      lon = lon,
+      GHI = GHI
+    )
+
+    # Then apply Reindl transposition
+    transp_out <- reindl_transposition(
       time = time,
       lat = lat,
       lon = lon,
@@ -220,7 +248,13 @@ pv_dc_pipeline <- function(
   # Add model-specific columns
   if (transposition_model == "olmo") {
     result$sun_azimuth <- sun_azimuth
-  } else {  # haydavies
+  } else if (transposition_model == "haydavies") {
+    result$DNI <- transp_out$DNI
+    result$DHI <- transp_out$DHI
+    result$azimuth <- azimuth_out
+    result$ai <- transp_out$ai
+    result$rb <- transp_out$rb
+  } else {  # reindl
     result$DNI <- transp_out$DNI
     result$DHI <- transp_out$DHI
     result$azimuth <- azimuth_out
