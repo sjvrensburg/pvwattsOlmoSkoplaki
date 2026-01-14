@@ -155,7 +155,7 @@ pv_power_pipeline <- function(
   tilt,
   azimuth,
   albedo = 0.2,
-  transposition_model = c("haydavies", "olmo"),
+  transposition_model = c("haydavies", "reindl", "perez", "olmo"),
   cell_temp_model = c("skoplaki", "faiman"),
   iam_exp = 0.05,
   P_dc0 = 230,
