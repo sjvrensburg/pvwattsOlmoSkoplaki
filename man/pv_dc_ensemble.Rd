@@ -18,7 +18,6 @@ pv_dc_ensemble(
   P_dc0 = 230,
   gamma = -0.0043,
   min_cos_zenith = 0.01745,
-  skoplaki_variant = c("model1", "model2"),
   T_NOCT = 45,
   T_a_NOCT = 20,
   I_NOCT = 800,
@@ -61,8 +60,6 @@ FALSE to disable IAM correction.}
 \item{min_cos_zenith}{Minimum value of cos(zenith) for Hay-Davies Rb calculation.
 Default: 0.01745.}
 
-\item{skoplaki_variant}{Either "model1" or "model2" (default "model1").}
-
 \item{T_NOCT}{Nominal Operating Cell Temperature (deg C, default 45).}
 
 \item{T_a_NOCT}{Ambient temperature at NOCT conditions (deg C, default 20).}
@@ -85,10 +82,11 @@ Default 6.84 W/(m²·°C·m/s).}
 Data frame with columns:
 \itemize{
 \item time, GHI, T_air, wind - Input data
-\item model - Model combination identifier (e.g., "olmo_skoplaki")
+\item model - Model combination identifier (e.g., "haydavies_erbs_skoplaki_model1")
 \item transposition - Transposition model used
-\item decomposition - Decomposition model used (default: "erbs")
+\item decomposition - Decomposition model used (erbs/boland for applicable models, NA for olmo)
 \item cell_temp - Cell temperature model used
+\item skoplaki_variant - Skoplaki model variant used (model1/model2)
 \item G_poa - Plane-of-array irradiance (W/m^2)
 \item T_cell - Cell temperature (deg C)
 \item P_dc - DC power output (W)
@@ -96,21 +94,30 @@ Data frame with columns:
 }
 }
 \description{
-Computes DC power using all combinations of transposition
-and cell temperature models, returning results in a format suitable for
-ensemble analysis.
+Computes DC power using all combinations of transposition,
+decomposition, and cell temperature models, returning results in a format
+suitable for ensemble analysis.
 
-This function runs 8 model combinations:
+This function runs a complete ensemble of model combinations covering:
 \enumerate{
-\item Hay-Davies transposition + Skoplaki cell temperature
-\item Hay-Davies transposition + Faiman cell temperature
-\item Reindl transposition + Skoplaki cell temperature
-\item Reindl transposition + Faiman cell temperature
-\item Perez transposition + Skoplaki cell temperature
-\item Perez transposition + Faiman cell temperature
-\item Olmo transposition + Skoplaki cell temperature
-\item Olmo transposition + Faiman cell temperature
+\item Hay-Davies + ERBS decomposition + Skoplaki (model1/model2)
+\item Hay-Davies + ERBS decomposition + Faiman
+\item Hay-Davies + Boland decomposition + Skoplaki (model1/model2)
+\item Hay-Davies + Boland decomposition + Faiman
+\item Reindl + ERBS decomposition + Skoplaki (model1/model2)
+\item Reindl + ERBS decomposition + Faiman
+\item Reindl + Boland decomposition + Skoplaki (model1/model2)
+\item Reindl + Boland decomposition + Faiman
+\item Perez + ERBS decomposition + Skoplaki (model1/model2)
+\item Perez + ERBS decomposition + Faiman
+\item Perez + Boland decomposition + Skoplaki (model1/model2)
+\item Perez + Boland decomposition + Faiman
+\item Olmo + Skoplaki (model1/model2)
+\item Olmo + Faiman
 }
+
+The skoplaki_variant parameter only affects results when cell_temp = "skoplaki".
+For faiman cell temperature, only one variant is run since results are identical.
 }
 \examples{
 \dontrun{
@@ -130,6 +137,9 @@ ensemble_result <- pv_dc_ensemble(
   tilt = 20,
   azimuth = 0
 )
+
+# View unique model combinations
+unique(ensemble_result$model)
 
 # Calculate ensemble statistics
 ensemble_stats <- aggregate(P_dc ~ time, data = ensemble_result,

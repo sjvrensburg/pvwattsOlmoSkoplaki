@@ -18,7 +18,6 @@ pv_power_ensemble(
   P_dc0 = 230,
   gamma = -0.0043,
   min_cos_zenith = 0.01745,
-  skoplaki_variant = c("model1", "model2"),
   T_NOCT = 45,
   T_a_NOCT = 20,
   I_NOCT = 800,
@@ -64,8 +63,6 @@ FALSE to disable IAM correction.}
 \item{min_cos_zenith}{Minimum value of cos(zenith) for Hay-Davies Rb calculation.
 Default: 0.01745.}
 
-\item{skoplaki_variant}{Either "model1" or "model2" (default "model1").}
-
 \item{T_NOCT}{Nominal Operating Cell Temperature (deg C, default 45).}
 
 \item{T_a_NOCT}{Ambient temperature at NOCT conditions (deg C, default 20).}
@@ -94,10 +91,11 @@ Default 6.84 W/(m²·°C·m/s).}
 Data frame with columns:
 \itemize{
 \item time, GHI, T_air, wind - Input data
-\item model - Model combination identifier (e.g., "olmo_skoplaki")
+\item model - Model combination identifier (e.g., "haydavies_erbs_skoplaki_model1")
 \item transposition - Transposition model used
-\item decomposition - Decomposition model used (default: "erbs")
+\item decomposition - Decomposition model used (erbs/boland for applicable models, NA for olmo)
 \item cell_temp - Cell temperature model used
+\item skoplaki_variant - Skoplaki model variant used (model1/model2)
 \item G_poa - Plane-of-array irradiance (W/m^2)
 \item T_cell - Cell temperature (deg C)
 \item P_dc - DC power output (W)
@@ -108,20 +106,27 @@ Data frame with columns:
 }
 }
 \description{
-Computes DC and AC power using all combinations of transposition
-and cell temperature models, returning results in a format suitable for
-ensemble analysis.
+Computes DC and AC power using all combinations of transposition,
+decomposition, and cell temperature models, returning results in a format
+suitable for ensemble analysis.
 
-This function runs 8 model combinations through both DC and AC stages:
+This function runs a complete ensemble of 21 model combinations through both
+DC and AC stages:
 \enumerate{
-\item Hay-Davies transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
-\item Hay-Davies transposition + Faiman cell temperature + PVWatts DC + AC clipping
-\item Reindl transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
-\item Reindl transposition + Faiman cell temperature + PVWatts DC + AC clipping
-\item Perez transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
-\item Perez transposition + Faiman cell temperature + PVWatts DC + AC clipping
-\item Olmo transposition + Skoplaki cell temperature + PVWatts DC + AC clipping
-\item Olmo transposition + Faiman cell temperature + PVWatts DC + AC clipping
+\item Hay-Davies + ERBS decomposition + Skoplaki (model1/model2) + PVWatts DC + AC clipping
+\item Hay-Davies + ERBS decomposition + Faiman + PVWatts DC + AC clipping
+\item Hay-Davies + Boland decomposition + Skoplaki (model1/model2) + PVWatts DC + AC clipping
+\item Hay-Davies + Boland decomposition + Faiman + PVWatts DC + AC clipping
+\item Reindl + ERBS decomposition + Skoplaki (model1/model2) + PVWatts DC + AC clipping
+\item Reindl + ERBS decomposition + Faiman + PVWatts DC + AC clipping
+\item Reindl + Boland decomposition + Skoplaki (model1/model2) + PVWatts DC + AC clipping
+\item Reindl + Boland decomposition + Faiman + PVWatts DC + AC clipping
+\item Perez + ERBS decomposition + Skoplaki (model1/model2) + PVWatts DC + AC clipping
+\item Perez + ERBS decomposition + Faiman + PVWatts DC + AC clipping
+\item Perez + Boland decomposition + Skoplaki (model1/model2) + PVWatts DC + AC clipping
+\item Perez + Boland decomposition + Faiman + PVWatts DC + AC clipping
+\item Olmo + Skoplaki (model1/model2) + PVWatts DC + AC clipping
+\item Olmo + Faiman + PVWatts DC + AC clipping
 }
 }
 \examples{
@@ -144,6 +149,9 @@ ensemble_result <- pv_power_ensemble(
   n_inverters = 1,
   inverter_kw = 0.25
 )
+
+# View unique model combinations
+unique(ensemble_result$model)
 
 # Calculate ensemble statistics for AC power
 ac_stats <- aggregate(P_ac ~ time, data = ensemble_result,
