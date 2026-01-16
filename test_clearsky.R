@@ -6,7 +6,7 @@ library(pvflux)
 # Test location: De Aar, South Africa (from vignette)
 lat <- -30.6279
 lon <- 24.0054
-altitude <- 1287  # meters
+altitude <- 1233  # meters (Mulilo De Aar PV plant)
 
 # Create time series for a clear day in January
 time <- seq(

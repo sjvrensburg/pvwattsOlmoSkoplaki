@@ -13,7 +13,7 @@ pv_clearsky_dc_pipeline(
   tilt,
   azimuth,
   linke_turbidity = 3,
-  altitude = 0,
+  altitude = 1233,
   albedo = 0.2,
   transposition_model = c("haydavies", "reindl", "perez"),
   cell_temp_model = c("skoplaki", "faiman"),
@@ -45,7 +45,7 @@ calculations and returned in the original timezone.}
 \item{linke_turbidity}{Linke turbidity coefficient. Default: 3.0 (clean rural).
 Can be a single value or vector matching length of time.}
 
-\item{altitude}{Altitude above sea level in meters. Default: 0}
+\item{altitude}{Altitude above sea level in meters. Default: 1233 (De Aar, South Africa)}
 
 \item{albedo}{Ground albedo (reflectance). Default: 0.2}
 
@@ -117,7 +117,7 @@ result <- pv_clearsky_dc_pipeline(
   tilt = 30,
   azimuth = 0,
   linke_turbidity = 3.0,
-  altitude = 1287
+  altitude = 1233
 )
 }
 

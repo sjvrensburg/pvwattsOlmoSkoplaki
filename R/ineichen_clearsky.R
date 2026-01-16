@@ -23,7 +23,7 @@
 #'   - 5.0: Turbid
 #'   - 6-7: Very turbid (polluted)
 #'   Default: 3.0
-#' @param altitude Altitude above sea level in meters. Default: 0
+#' @param altitude Altitude above sea level in meters. Default: 1233 (De Aar, South Africa)
 #' @param dni_extra Extraterrestrial normal irradiance (W/m^2). If NULL (default),
 #'   calculated using Spencer (1971) formula with solar_constant.
 #' @param solar_constant Solar constant (W/m^2). Default: 1366.1. Only used if
@@ -59,7 +59,7 @@
 #'   lat = -30.6279,
 #'   lon = 24.0054,
 #'   linke_turbidity = 3.0,
-#'   altitude = 1287
+#'   altitude = 1233
 #' )
 #' }
 #'
@@ -69,7 +69,7 @@ ineichen_clearsky <- function(
   lat,
   lon,
   linke_turbidity = 3.0,
-  altitude = 0,
+  altitude = 1233,
   dni_extra = NULL,
   solar_constant = 1366.1,
   perez_enhancement = FALSE,

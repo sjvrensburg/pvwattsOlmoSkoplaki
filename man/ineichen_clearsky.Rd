@@ -9,7 +9,7 @@ ineichen_clearsky(
   lat,
   lon,
   linke_turbidity = 3,
-  altitude = 0,
+  altitude = 1233,
   dni_extra = NULL,
   solar_constant = 1366.1,
   perez_enhancement = FALSE,
@@ -36,7 +36,7 @@ specified, UTC is assumed. See \code{\link{time_utils}} for details.}
 Default: 3.0
 }}
 
-\item{altitude}{Altitude above sea level in meters. Default: 0}
+\item{altitude}{Altitude above sea level in meters. Default: 1233 (De Aar, South Africa)}
 
 \item{dni_extra}{Extraterrestrial normal irradiance (W/m^2). If NULL (default),
 calculated using Spencer (1971) formula with solar_constant.}
@@ -82,7 +82,7 @@ result <- ineichen_clearsky(
   lat = -30.6279,
   lon = 24.0054,
   linke_turbidity = 3.0,
-  altitude = 1287
+  altitude = 1233
 )
 }
 

@@ -21,7 +21,7 @@
 #' @param azimuth Panel azimuth angle in degrees (0 = north, 90 = east, 180 = south, 270 = west)
 #' @param linke_turbidity Linke turbidity coefficient. Default: 3.0 (clean rural).
 #'   Can be a single value or vector matching length of time.
-#' @param altitude Altitude above sea level in meters. Default: 0
+#' @param altitude Altitude above sea level in meters. Default: 1233 (De Aar, South Africa)
 #' @param albedo Ground albedo (reflectance). Default: 0.2
 #' @param transposition_model Transposition model to use. Options: "haydavies", "reindl", "perez".
 #'   Default: "haydavies"
@@ -71,7 +71,7 @@
 #'   tilt = 30,
 #'   azimuth = 0,
 #'   linke_turbidity = 3.0,
-#'   altitude = 1287
+#'   altitude = 1233
 #' )
 #' }
 #'
@@ -85,7 +85,7 @@ pv_clearsky_dc_pipeline <- function(
   tilt,
   azimuth,
   linke_turbidity = 3.0,
-  altitude = 0,
+  altitude = 1233,
   albedo = 0.2,
   transposition_model = c("haydavies", "reindl", "perez"),
   cell_temp_model = c("skoplaki", "faiman"),
@@ -184,7 +184,7 @@ pv_clearsky_dc_pipeline <- function(
 #'   tilt = 30,
 #'   azimuth = 0,
 #'   linke_turbidity = 3.0,
-#'   altitude = 1287,
+#'   altitude = 1233,
 #'   n_inverters = 20,
 #'   inverter_kw = 500
 #' )
@@ -200,7 +200,7 @@ pv_clearsky_power_pipeline <- function(
   tilt,
   azimuth,
   linke_turbidity = 3.0,
-  altitude = 0,
+  altitude = 1233,
   albedo = 0.2,
   transposition_model = c("haydavies", "reindl", "perez"),
   cell_temp_model = c("skoplaki", "faiman"),
