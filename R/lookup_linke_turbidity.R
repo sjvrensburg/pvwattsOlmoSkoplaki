@@ -37,9 +37,19 @@
 #' - Longitude: -180° to 180° (4320 points, 5 arcminute spacing)
 #' - Time: Monthly climatology (12 values per location)
 #'
-#' **Interpolation**: When \code{interp_turbidity = TRUE}, monthly values are
+#' **Interpolation**: When \\code{interp_turbidity = TRUE}, monthly values are
 #' interpolated to daily resolution using a sinusoidal fit through month
 #' midpoints. This provides smooth daily variations.
+#'
+#' **Timezone Handling**: The month for turbidity lookup is determined from
+#' the input time's \\strong{local timezone} (if specified), not UTC. For example:
+#' \\itemize{
+#'   \\item Input: "2026-01-15 23:00:00 SAST" (UTC+2) → Uses January's turbidity
+#'   \\item Input: "2026-01-15 21:00:00 UTC" (same physical moment) → Uses January's turbidity
+#' }
+#' This approach is appropriate for monthly climatological data, where the calendar
+#' month is the relevant index. Day-of-year interpolation (if enabled) also uses the
+#' local date to determine position within the month.
 #'
 #' @references
 #' Remund, J., Wald, L., Lefèvre, M., Ranchin, T., & Page, J. (2003).
@@ -77,8 +87,16 @@ lookup_linke_turbidity <- function(
          "Install it with: install.packages('hdf5r')")
   }
 
-  # Convert time to POSIXlt for month/day extraction
-  time_lt <- as.POSIXlt(time)
+  # Prepare time: standardize format and capture original timezone
+  # Month selection uses local date (not UTC), which is appropriate for
+  # climatological data indexed by calendar month
+  time_info <- prepare_time_utc(time)
+  time_utc <- time_info$time_utc
+  original_tz <- time_info$original_tz
+
+  # Convert back to local timezone for month/day extraction
+  time_local <- restore_time_tz(time_utc, original_tz)
+  time_lt <- as.POSIXlt(time_local)
   n <- length(time)
 
   # Recycle lat/lon if needed
