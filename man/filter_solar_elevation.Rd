@@ -4,56 +4,85 @@
 \alias{filter_solar_elevation}
 \title{Filter times by solar elevation angle}
 \usage{
-filter_solar_elevation(time, lat, lon, max_zenith = 10, timezone = NULL)
+filter_solar_elevation(time, lat, lon, max_zenith = 80)
 }
 \arguments{
-\item{time}{Timestamps as POSIXct, POSIXlt, character, or numeric.}
+\item{time}{Timestamps as POSIXct, POSIXlt, character, or numeric. If a timezone
+is specified, times are internally converted to UTC for solar position
+calculations. If no timezone is specified, UTC is assumed. See
+\code{\link{time_utils}} for details.}
 
 \item{lat}{Latitude in degrees (negative for southern hemisphere)}
 
 \item{lon}{Longitude in degrees (east positive, west negative)}
 
 \item{max_zenith}{Maximum allowed solar zenith angle in degrees.
-Times with zenith angles greater than this value will be filtered out.
-Default: 10 degrees (solar elevation > 80 degrees)}
-
-\item{timezone}{Optional timezone specification. If NULL (default),
-the timezone from the time input is used. If specified, times are
-converted to this timezone for calculation.}
+Times with zenith angles greater than this value will return FALSE.
+Default: 80 degrees (solar elevation > 10 degrees)}
 }
 \value{
 Logical vector of the same length as time, where TRUE indicates
-the solar zenith angle is less than max_zenith.
+the solar zenith angle is less than max_zenith (i.e., the sun is above
+the specified elevation threshold).
 }
 \description{
 Create a logical filter vector indicating times when the solar zenith angle
 is below a specified threshold. This is useful for filtering out times when
-the sun is too low on the horizon, such as during twilight or nighttime.
+the sun is too low on the horizon, such as during early morning, late evening,
+twilight, or nighttime conditions.
 
 The function calculates solar position using the same algorithms as the
-clear-sky models, ensuring consistency with the rest of the package.
+clear-sky models, ensuring consistency with the rest of the package. All
+time handling follows the package's timezone conventions, with input times
+converted to UTC for solar position calculations.
+}
+\details{
+Solar zenith angle is the angle between the vertical (directly overhead) and
+the sun. A zenith angle of 0° means the sun is directly overhead, while 90°
+means the sun is on the horizon. Solar elevation angle is the complement:
+elevation = 90° - zenith.
+
+Common values for \code{max_zenith}:
+\itemize{
+\item 80°: Sun above 10° elevation (full daylight, minimal atmospheric effects)
+\item 75°: Sun above 15° elevation (good for most PV applications)
+\item 70°: Sun above 20° elevation (avoiding low-angle irradiance)
+\item 90°: Any time the sun is above the horizon (includes all daylight hours)
+}
 
 This function uses the solar position calculations from the insol package
 (GPL-2 licensed) that are included in pvflux for solar position computations.
 }
 \examples{
 \dontrun{
-# Create sample data
-time <- seq(as.POSIXct("2026-01-15 05:00", tz = "UTC"),
+# Create sample data for a full day in South Africa
+time <- seq(as.POSIXct("2026-01-15 00:00", tz = "Africa/Johannesburg"),
             by = "hour", length.out = 24)
 lat <- -30.6279  # De Aar, South Africa
 lon <- 24.0054
 
-# Filter for times when sun is high in the sky (zenith < 10 degrees)
-is_good_time <- filter_solar_elevation(time, lat, lon, max_zenith = 10)
+# Filter for daytime hours (sun above horizon)
+is_daytime <- filter_solar_elevation(time, lat, lon, max_zenith = 90)
+daytime_hours <- time[is_daytime]
+print(daytime_hours)
 
-# Get filtered times
-high_sun_times <- time[is_good_time]
-print(high_sun_times)
+# Filter for good solar conditions (elevation > 15 degrees)
+is_good <- filter_solar_elevation(time, lat, lon, max_zenith = 75)
 
-# Filter actual measurement data
-# ghi_data <- data.frame(time = time, GHI = rnorm(24, 800, 200))
-# filtered_data <- ghi_data[is_good_time, ]
+# Apply filter to measurement data
+# ghi_data <- data.frame(time = time, GHI = measured_ghi)
+# good_data <- ghi_data[is_good, ]
+
+# Use with clear-sky pipeline to get only high-sun periods
+result <- pv_clearsky_dc_pipeline(
+  time = time[is_good],
+  lat = lat,
+  lon = lon,
+  T_air = rep(25, sum(is_good)),
+  wind = rep(3, sum(is_good)),
+  tilt = 30,
+  azimuth = 0
+)
 }
 
 }
