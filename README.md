@@ -35,13 +35,18 @@ for most applications. See `?olmo_transposition` for details.
 - **Faiman Model**: Simple empirical model adopted in IEC 61853 standards
 
 ### Clear-Sky Models
-- **Ineichen-Perez Clear-Sky Model**: Estimates clear-sky irradiance (GHI, DNI, DHI) based on:
+- **Ineichen-Perez Clear-Sky Model** (default): Estimates clear-sky irradiance (GHI, DNI, DHI) based on:
   - Solar zenith angle
-  - Linke turbidity coefficient
+  - Linke turbidity coefficient (supports automatic database lookup)
   - Altitude-based atmospheric corrections
   - Optional Perez enhancement factor
+- **Haurwitz Clear-Sky Model**: Simple model requiring only solar position
+  - No turbidity or altitude parameters needed
+  - Suitable for quick estimates when atmospheric data is unavailable
+- **Clear-Sky Model Selection**: Choose between models via `clearsky_model` parameter
 - **Clear-Sky Pipelines**: Complete DC and AC power estimation under clear-sky conditions
 - **Performance Metrics**: Clear-sky index (CSI) and performance ratio calculations
+- **Solar Elevation Filtering**: `filter_solar_elevation()` filters time series by sun height above horizon
 
 ### Additional Features
 - **Incidence Angle Modifier (IAM)**: Optional optical loss correction using power-law model
@@ -220,9 +225,22 @@ Calculate clear-sky irradiance using the Ineichen-Perez model:
 ```r
 clearsky <- ineichen_clearsky(
   time, lat, lon,
-  linke_turbidity = 3.0,
-  altitude = 1233,  # De Aar altitude (m)
+  linke_turbidity = 3.0,  # Or NULL for automatic database lookup
+  altitude = 1233,       # De Aar altitude (m)
   perez_enhancement = FALSE
+)
+```
+
+**Returns:** Data frame with ghi_clearsky, dni_clearsky, dhi_clearsky, zenith, airmass
+
+#### `haurwitz_clearsky()`
+
+Calculate clear-sky irradiance using the simple Haurwitz model (no turbidity needed):
+
+```r
+clearsky_simple <- haurwitz_clearsky(
+  time, lat, lon,
+  altitude = 1233
 )
 ```
 
@@ -230,17 +248,25 @@ clearsky <- ineichen_clearsky(
 
 #### `pv_clearsky_power_pipeline()`
 
-Calculate expected AC power under clear-sky conditions:
+Calculate expected AC power under clear-sky conditions with model selection:
 
 ```r
+# Using Ineichen-Perez (default, requires turbidity)
 clearsky_result <- pv_clearsky_power_pipeline(
   time, lat, lon, T_air, wind, tilt, azimuth,
+  clearsky_model = "ineichen",  # or "haurwitz"
   linke_turbidity = 3.0,
   altitude = 1233,
   transposition_model = "haydavies",
   cell_temp_model = "skoplaki",
   n_inverters = 20,
   inverter_kw = 500
+)
+
+# Using Haurwitz (simpler, no turbidity parameter)
+clearsky_result_simple <- pv_clearsky_power_pipeline(
+  time, lat, lon, T_air, wind, tilt, azimuth,
+  clearsky_model = "haurwitz"
 )
 ```
 
@@ -261,6 +287,24 @@ csi <- clearsky_index(GHI_measured, clearsky$ghi_clearsky)
 # Performance ratio (ratio of measured to clear-sky power)
 pr <- clearsky_performance_ratio(P_measured, clearsky_result$P_ac)
 ```
+
+#### `filter_solar_elevation()`
+
+Filter time series by solar elevation angle (sun height above horizon):
+
+```r
+# Filter out observations when solar elevation < 10 degrees
+is_valid <- filter_solar_elevation(time, lat, lon, min_elevation = 10)
+filtered_data <- your_data[is_valid, ]
+
+# Common thresholds:
+# min_elevation = 0:  All daylight hours
+# min_elevation = 10: Full daylight (default)
+# min_elevation = 15: Good for PV applications
+# min_elevation = 30: High sun only
+```
+
+**Returns:** Logical vector (TRUE when elevation ≥ threshold, FALSE otherwise)
 
 ### Individual Model Functions
 
@@ -430,11 +474,14 @@ The package includes sensible defaults based on:
   - Efficiency: 97%
   - Configuration: 20 inverters × 500 kW
 
-- **Clear-Sky Model (Ineichen-Perez)**:
-  - Altitude: 1233 m (De Aar, South Africa)
-  - Linke turbidity: 3.0 (clean rural conditions)
-  - Perez enhancement: FALSE (disabled by default)
-  - Solar constant: 1366.1 W/m²
+- **Clear-Sky Models**:
+  - **Ineichen-Perez** (default): Atmospheric turbidity-based model
+    - Altitude: 1233 m (De Aar, South Africa)
+    - Linke turbidity: 3.0 (clean rural conditions) - or `NULL` for automatic database lookup
+    - Perez enhancement: FALSE (disabled by default)
+    - Solar constant: 1366.1 W/m²
+  - **Haurwitz**: Solar geometry-only model (no turbidity required)
+    - Suitable for quick estimates when atmospheric data is unavailable
 
 ## Code Attribution
 
@@ -442,6 +489,7 @@ The package includes sensible defaults based on:
 
 Key components adapted from pvlib-python include:
 - Ineichen-Perez clear-sky model
+- Haurwitz clear-sky model
 - Perez transposition model
 - Reindl transposition model
 - Hay-Davies transposition model
